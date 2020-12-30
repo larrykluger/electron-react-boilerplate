@@ -60,8 +60,11 @@ class App extends React.Component<unknown, AppState> {
 
   componentDidMount() {
     // subscribe to the url-action channel
-    // eslint-disable-next-line
     ipcRenderer.on('url-action', this.oAuthImplicit.urlActionListener);
+  }
+
+  componentWillUnmount() {
+    ipcRenderer.removeListener('url-action', this.oAuthImplicit.urlActionListener);
   }
 
   startAuthentication() {
@@ -117,7 +120,7 @@ class App extends React.Component<unknown, AppState> {
       showHomePage: true});
 
     toast.success(`Welcome ${results.name}, you are now logged in`);
-    toast.warning(`Is the browser tab still open? Then please close it.`);
+    toast.warning((<span>If the browser tab is still open<br />then please close it.</span>));
   }
 
   HomePage() {
