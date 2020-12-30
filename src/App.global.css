@@ -72,3 +72,21 @@ a:hover {
   align-items: center;
   margin: 20px 0;
 }
+
+.accountInfo {
+  position: absolute;
+  left: 2em;
+  top: 2em;
+  font-size: 14px;
+}
+
+.accountInfo p {
+  margin: 0;
+}
+
+.accountInfo span.a, .smallA {
+  font-variant: small-caps;
+  text-decoration: underline;
+}
+
+@import '~react-toastify/dist/ReactToastify.css';
