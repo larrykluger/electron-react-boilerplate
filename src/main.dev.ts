@@ -9,7 +9,6 @@
  * OAuth support based on file GitHub Desktop src file main.ts
  * See https://github.com/desktop/desktop/blob/development/app/src/main-process/main.ts
  */
-import * as URL from 'url';
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
@@ -27,7 +26,7 @@ const WIN32 = process.platform === 'win32';
 // const LINUX  = process.platform === 'linux';
 /** Extra argument for the protocol launcher on Windows */
 const protocolLauncherArg = '--protocol-launcher';
-const possibleProtocols = new Set([SCHEME_NAME]);
+const possibleProtocols = [SCHEME_NAME];
 
 export default class AppUpdater {
   constructor() {
@@ -65,34 +64,51 @@ function handleAppURL(url: string) {
  *             path
  */
 function handlePossibleProtocolLauncherArgs(args: ReadonlyArray<string>) {
-  log.info(`Received possible protocol arguments: ${args.length}`);
+  // log.info(`Received possible protocol arguments: ${args.length}`);
 
   if (WIN32) {
-    // Desktop registers it's protocol handler callback on Windows as
+    // Desktop registers its protocol handler callback on Windows as
     // `[executable path] --protocol-launcher "%1"`. Note that extra command
     // line arguments might be added by Chromium
     // (https://electronjs.org/docs/api/app#event-second-instance).
     // At launch Desktop checks for that exact scenario here before doing any
     // processing. If there's more than one matching url argument because of a
     // malformed or untrusted url then we bail out.
-    const matchingUrls = args.filter((arg) => {
-      // sometimes `URL.parse` throws an error
-      try {
-        const url = URL.parse(arg);
-        // i think this `slice` is just removing a trailing `:`
-        return url.protocol && possibleProtocols.has(url.protocol.slice(0, -1));
-      } catch (e) {
-        log.error(`Unable to parse argument as URL: ${arg}`);
-        return false;
-      }
-    });
+    //
+    // During development, there might be more args.
+    // Strategy: look for the arg that is protocolLauncherArg,
+    // then use the next arg as the incoming URL
 
-    if (args.includes(protocolLauncherArg) && matchingUrls.length === 1) {
-      handleAppURL(matchingUrls[0]);
-    } else {
-      log.error(`Malformed launch arguments received: ${args}`);
+    // Debugging:
+    // args.forEach((v, i) => log.info(`argv[${i}] ${v}`));
+
+    // find the argv index for protocolLauncherArg
+    const flagI: number = args.findIndex((v) => v === protocolLauncherArg);
+    if (flagI === -1) {
+      // log.error(`Ignoring unexpected launch arguments: ${args}`);
+      return;
     }
+    // find the arg that starts with one of our desired protocols
+    const url: string | undefined = args.find((arg) => {
+      // eslint-disable-next-line no-plusplus
+      for (let index = 0; index < possibleProtocols.length; index++) {
+        const protocol = possibleProtocols[index];
+        if (protocol && arg.indexOf(protocol) === 0) {
+          return true;
+        }
+      }
+      return false;
+    });
+    if (url === undefined) {
+      log.error(
+        `No url in args even though flag was present! ${args.join('; ')}`
+      );
+      return;
+    }
+    handleAppURL(url);
+    // End of WIN32 case
   } else if (args.length > 1) {
+    // Mac or linux case
     handleAppURL(args[1]);
   }
 }
@@ -105,27 +121,32 @@ function setAsDefaultProtocolClient(protocol: string | undefined) {
   if (!protocol) {
     return;
   }
-  if (WIN32) {
+  if (
+    WIN32 &&
+    (process.env.NODE_ENV === 'development' ||
+      process.env.DEBUG_PROD === 'true')
+  ) {
+    // Special handling on Windows while developing.
+    // See https://stackoverflow.com/a/53786254/64904
+    // remove so we can register each time as we run the app.
+    app.removeAsDefaultProtocolClient(protocol);
+    // Set the path of electron.exe and files
+    // The following works for Electron v11.
+    // Use the following console script to see the argv contents
+    // process.argv.forEach((v, i)=> log.info(`argv[${i}] ${v}`));
+    app.setAsDefaultProtocolClient(protocol, process.execPath, [
+      process.argv[1], // -r
+      path.resolve(process.argv[2]), // ./.erb/scripts/BabelRegister
+      path.resolve(process.argv[3]), // ./src/main.dev.ts
+      protocolLauncherArg,
+    ]);
+  } else if (WIN32) {
     app.setAsDefaultProtocolClient(protocol, process.execPath, [
       protocolLauncherArg,
     ]);
   } else {
     app.setAsDefaultProtocolClient(protocol);
   }
-}
-
-if (process.env.NODE_ENV === 'production') {
-  // eslint-disable-next-line global-require
-  const sourceMapSupport = require('source-map-support');
-  sourceMapSupport.install();
-}
-
-if (
-  process.env.NODE_ENV === 'development' ||
-  process.env.DEBUG_PROD === 'true'
-) {
-  // eslint-disable-next-line global-require
-  require('electron-debug')();
 }
 
 const installExtensions = async () => {
@@ -142,6 +163,9 @@ const installExtensions = async () => {
     ).catch(console.log);
 };
 
+/**
+ * Create the React window--the renderer
+ */
 const createWindow = async () => {
   if (
     process.env.NODE_ENV === 'development' ||
@@ -202,6 +226,51 @@ const createWindow = async () => {
   new AppUpdater();
 };
 
+//
+// MAIN LINE
+//
+
+// Are we a duplicate?
+let isDuplicateInstance = false;
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+isDuplicateInstance = !gotSingleInstanceLock;
+
+app.on('second-instance', (_event, args) => {
+  // Someone tried to run a second instance, we should focus our window.
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+
+    if (!mainWindow.isVisible()) {
+      mainWindow.show();
+    }
+
+    mainWindow.focus();
+  }
+
+  handlePossibleProtocolLauncherArgs(args);
+});
+
+// Hari-kari if we're a clone
+if (isDuplicateInstance) {
+  app.quit();
+}
+
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line global-require
+  const sourceMapSupport = require('source-map-support');
+  sourceMapSupport.install();
+}
+
+if (
+  process.env.NODE_ENV === 'development' ||
+  process.env.DEBUG_PROD === 'true'
+) {
+  // eslint-disable-next-line global-require
+  require('electron-debug')();
+}
+
 /**
  * Add event listeners...
  */
@@ -233,5 +302,9 @@ app.on('ready', () => {
   possibleProtocols.forEach((protocol) => setAsDefaultProtocolClient(protocol));
 });
 
-// eslint-disable-next-line no-console
-app.whenReady().then(createWindow).catch(console.log);
+app
+  .whenReady()
+  .then(createWindow)
+  .catch((error) => {
+    log.error(`error creating window: ${error}`);
+  });

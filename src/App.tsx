@@ -114,9 +114,10 @@ class App extends React.Component<unknown, AppState> {
       externalAccountId: results.externalAccountId,
       accountName: results.accountName,
       baseUri: results.baseUri,
-      showHomePage: true,
-    })
+      showHomePage: true});
+
     toast.success(`Welcome ${results.name}, you are now logged in`);
+    toast.warning(`Is the browser tab still open? Then please close it.`);
   }
 
   HomePage() {
