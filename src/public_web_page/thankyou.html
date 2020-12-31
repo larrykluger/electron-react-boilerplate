@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8">
+  <title>Please close this tab</title>
+  <meta name="description" content="Please close this tab">
+
+  <style>
+    body {
+      position: relative;
+      color: darkblue;
+      height: 100vh;
+      background: lightsteelblue;
+      font-family: 'Noto Sans JP', sans-serif;
+      overflow-y: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .newline {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h1 class="newline">Thank you for logging in.</h1>
+    <h1 class="newline">Please close this tab.</h1>
+  </div>
+
+  <script>
+    let electronUrl = 'com.example.electron1:/implicit-result';
+    //console.log (`##### redirecting to ${electronUrl + window.hash}`)
+
+    window.location = electronUrl + window.location.hash;
+  </script>
+</body>
+

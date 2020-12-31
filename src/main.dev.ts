@@ -234,6 +234,10 @@ const createWindow = async () => {
 let isDuplicateInstance = false;
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 isDuplicateInstance = !gotSingleInstanceLock;
+// Hari-kari if we're a clone
+if (isDuplicateInstance) {
+  app.quit();
+}
 
 app.on('second-instance', (_event, args) => {
   // Someone tried to run a second instance, we should focus our window.
@@ -251,11 +255,6 @@ app.on('second-instance', (_event, args) => {
 
   handlePossibleProtocolLauncherArgs(args);
 });
-
-// Hari-kari if we're a clone
-if (isDuplicateInstance) {
-  app.quit();
-}
 
 if (process.env.NODE_ENV === 'production') {
   // eslint-disable-next-line global-require

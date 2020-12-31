@@ -157,7 +157,13 @@ class OAuthImplicit {
     // One slash (no authority) is recommended by RFC
     // But some IdP's don't support it.
     const slashes = process.env.SCHEME_SLASH_COUNT === '1' ? '/' : '//';
-    const redirectUrl = `redirect_uri=${process.env.SCHEME_NAME}:${slashes}${process.env.IMPLICIT_RETURN_PATH}`;
+    // Our app's redirect url:
+    const directRedirectUrl = `${process.env.SCHEME_NAME}:${slashes}${process.env.IMPLICIT_RETURN_PATH}`;
+    // Possibly use an intermediate redirect page:
+    const redirectUrl = `redirect_uri=${
+      process.env.IMPLICIT_REDIRECT_URL && process.env.IMPLICIT_REDIRECT_URL.length > 2
+        ? process.env.IMPLICIT_REDIRECT_URL
+        : directRedirectUrl}`;
     const url =
       `${process.env.IDP_URL}/oauth/auth?` +
       `response_type=token&` +

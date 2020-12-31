@@ -87,7 +87,7 @@ class App extends React.Component<unknown, AppState> {
    */
   logout() {
     this.clearAuth();
-    toast.success('You have logged out.');
+    toast.success('You have logged out.', { autoClose: 1000 });
   }
 
   clearAuth() {
@@ -120,7 +120,6 @@ class App extends React.Component<unknown, AppState> {
       showHomePage: true});
 
     toast.success(`Welcome ${results.name}, you are now logged in`);
-    toast.warning((<span>If the browser tab is still open<br />then please close it.</span>));
   }
 
   HomePage() {
