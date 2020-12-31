@@ -17,16 +17,15 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { parseAppURL } from './parse-app-url';
+import config from './config';
 
-require('dotenv').config();
-
-const { SCHEME_NAME } = process.env; // https://stackoverflow.com/a/54661242/64904
+const { schemeName } = config;
 const DARWIN = process.platform === 'darwin';
 const WIN32 = process.platform === 'win32';
 // const LINUX  = process.platform === 'linux';
 /** Extra argument for the protocol launcher on Windows */
 const protocolLauncherArg = '--protocol-launcher';
-const possibleProtocols = [SCHEME_NAME];
+const possibleProtocols = [schemeName];
 
 export default class AppUpdater {
   constructor() {

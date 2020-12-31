@@ -8,6 +8,7 @@
 
 import log from 'electron-log'; // https://www.npmjs.com/package/electron-log
 import URL from 'url';
+import config from './config';
 
 export interface IOAuthAction {
   readonly name: string;
@@ -43,7 +44,7 @@ export function parseAppURL(url: string): URLActionType {
   }
 
   // determine actionName
-  // This version: only expecting the IMPLICIT_RETURN_PATH action.
+  // This version: only expecting the implicitReturnPath action.
   // Need to check the hostname and pathname due to single/double
   // slash issues.
   // N.B. Once we start using WHATG URL, only need to check the pathname
@@ -54,16 +55,16 @@ export function parseAppURL(url: string): URLActionType {
   // necessary security against CSRF and other attacks
   if (
     pathname &&
-    process.env.IMPLICIT_RETURN_PATH &&
-    pathname.toLowerCase().includes(process.env.IMPLICIT_RETURN_PATH)
+    config.implicitReturnPath &&
+    pathname.toLowerCase().includes(config.implicitReturnPath)
   ) {
-    actionName = process.env.IMPLICIT_RETURN_PATH;
+    actionName = config.implicitReturnPath;
   } else if (
     hostname &&
-    process.env.IMPLICIT_RETURN_PATH &&
-    hostname.toLowerCase().includes(process.env.IMPLICIT_RETURN_PATH)
+    config.implicitReturnPath &&
+    hostname.toLowerCase().includes(config.implicitReturnPath)
   ) {
-    actionName = process.env.IMPLICIT_RETURN_PATH;
+    actionName = config.implicitReturnPath;
   }
 
   if (!actionName) {
@@ -75,7 +76,7 @@ export function parseAppURL(url: string): URLActionType {
   let expiresIn: number;
   let state: string;
 
-  // Start of actionName === process.env.IMPLICIT_RETURN_PATH section
+  // Start of actionName === config.implicitReturnPath section
   const { hash } = parsedURL;
   const accessTokenFound = hash && hash.substring(0, 14) === '#access_token=';
   if (!accessTokenFound) {
@@ -101,7 +102,7 @@ export function parseAppURL(url: string): URLActionType {
   state = results[8];
   expiresIn = parseInt(results[4], 10);
   /* eslint-enable prefer-destructuring, prefer-const */
-  // End of actionName === process.env.IMPLICIT_RETURN_PATH section
+  // End of actionName === config.implicitReturnPath section
 
   return { name: actionName, accessToken, state, expiresIn };
 }

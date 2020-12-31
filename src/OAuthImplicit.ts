@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { URLActionType, IOAuthAction } from './parse-app-url';
 // eslint-disable-next-line import/no-cycle
 import App from './App';
+import config from './config';
 
 const expirationBuffer = 10 * 60; // 10 minute buffer
 const sdkString = 'electron1';
@@ -41,7 +42,7 @@ class OAuthImplicit {
    * @param accessToken string
    */
   static async fetchUserInfo(accessToken: string) {
-    return fetch(`${process.env.IDP_URL}/oauth/userinfo`, {
+    return fetch(`${config.idpUrl}/oauth/userinfo`, {
       headers: new Headers({
         Authorization: `Bearer ${accessToken}`,
         Accept: `application/json`,
@@ -75,7 +76,7 @@ class OAuthImplicit {
    * Listener for url-action messages
    */
   async urlActionListener(_event: IpcRendererEvent, action: URLActionType) {
-    if (action.name !== process.env.IMPLICIT_RETURN_PATH) {
+    if (action.name !== config.implicitReturnPath) {
       return; // IGNORE this message
     }
     this.closeWindow();
@@ -156,19 +157,20 @@ class OAuthImplicit {
     this.oauthState = oauthState;
     // One slash (no authority) is recommended by RFC
     // But some IdP's don't support it.
-    const slashes = process.env.SCHEME_SLASH_COUNT === '1' ? '/' : '//';
+    const slashes = config.schemeSlashCount === 1 ? '/' : '//';
     // Our app's redirect url:
-    const directRedirectUrl = `${process.env.SCHEME_NAME}:${slashes}${process.env.IMPLICIT_RETURN_PATH}`;
+    const directRedirectUrl = `${config.schemeName}:${slashes}${config.implicitReturnPath}`;
     // Possibly use an intermediate redirect page:
     const redirectUrl = `redirect_uri=${
-      process.env.IMPLICIT_REDIRECT_URL && process.env.IMPLICIT_REDIRECT_URL.length > 2
-        ? process.env.IMPLICIT_REDIRECT_URL
-        : directRedirectUrl}`;
+      config.implicitRedirectUrl && config.implicitRedirectUrl.length > 2
+        ? config.implicitRedirectUrl
+        : directRedirectUrl
+    }`;
     const url =
-      `${process.env.IDP_URL}/oauth/auth?` +
+      `${config.idpUrl}/oauth/auth?` +
       `response_type=token&` +
-      `scope=${process.env.IMPLICIT_SCOPES}&` +
-      `client_id=${process.env.IMPLICIT_CLIENT_ID}&` +
+      `scope=${config.implicitScopes}&` +
+      `client_id=${config.implicitClientId}&` +
       `state=${oauthState}&${redirectUrl}`;
 
     this.loginWindow = window.open(url, 'oauth_authentication', '');
