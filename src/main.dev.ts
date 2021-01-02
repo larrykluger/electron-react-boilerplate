@@ -140,6 +140,7 @@ function setAsDefaultProtocolClient(protocol: string | undefined) {
       protocolLauncherArg,
     ]);
   } else if (WIN32) {
+    app.removeAsDefaultProtocolClient(protocol);
     app.setAsDefaultProtocolClient(protocol, process.execPath, [
       protocolLauncherArg,
     ]);
