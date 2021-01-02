@@ -39,15 +39,19 @@ Eg. `com.example.Electron1:/implicit-result`
 Some can, some can't.
 
 If you are using an intermediate webpage then a single slash
-can be used, since the URL will be sent by the intermediate
+can always be used, since the URL will be sent by the intermediate
 webpage, not by the IdP.
 
 **Step 3.** Depending on the above, decide on your application's redirect URL.
-Following [RFC 8252 sec. 7.1](https://tools.ietf.org/html/rfc8252#section-7.1), the redirect URL MUST use a scheme that includes a domain name under your control, expressed in reverse order.
+Following [RFC 8252 sec. 7.1](https://tools.ietf.org/html/rfc8252#section-7.1), the redirect URL MUST use a scheme (or protocol) that includes a domain name under your control, expressed in reverse order.
 
-Example: You have control over the DNS name `electron1.example.com`
+The **scheme** is the part of the URL before the colon.
+
+Example: for the URL `https://example.com`, the scheme is `https`.
+
+A private scheme example: You have control over the DNS name `electron1.example.com`
 where `electron1` is the name of your app. So your private scheme
-should be `com.dshackathon.electron1`
+could be `com.dshackathon.electron1`
 
 The pathname portion of the redirect URL must have a single part
 such as `implicit-result`
@@ -64,8 +68,9 @@ or (using example values)
 If you're not using an intermediate page, then your
 application's URL may need two slashes, depending on your IdP.
 
-If you're using an intermediate page, add this URL to the
-intermediate page.
+If you're using an intermediate page, add the application's URL
+(with the private scheme)
+to the intermediate page.
 See the `electronUrl` JavaScript variable setting in the
 example intermediate page. Note that a single slash is used
 after the colon.
@@ -81,25 +86,28 @@ after the colon.
 
 - As needed by the IdP, allow the scopes that the application will request.
 
-## .env File
+## src/config.js File
 
-A `.env` file is required for the Implicit grant settings.
-
-Create the file in the root of the project directory.
+A file `src/config.js` is required for the Implicit grant settings.
+See the example file `src/config_example.js`
 
 Contents of the file with example settings:
 
 ```
-schemeName='com.example.Electron1'
-schemeSlashCount='2'
-idpUrl='https://account-d.docusign.com'
-implicitClientId='b2b52xxx-xxxx-xxxx-xxxx-123456789012'
-implicitReturnPath='implicit-result'
-implicitScopes='signature'
-implicitRedirectUrl='https://Electron1.example.com/thankyou.html'
+const config = {
+  schemeName: 'com.example.electron1',
+  schemeSlashCount: 1, // 1 or 2 (not a string!)
+  idpUrl: 'https://account-d.docusign.com',
+  implicitClientId: 'b2b5xxxx-xxxx-xxxx-xxxx-xxxxxxxxxx6b',
+  implicitReturnPath: 'implicit-result',
+  implicitScopes: 'signature',
+  implicitRedirectUrl: 'http://xxx.s3-website.us-east-2.amazonaws.com/',
+};
+
+export default config;
 ```
 
-## .env Setting values
+## src/config.js setting values
 
 ### schemeName
 
@@ -114,29 +122,29 @@ should be `com.dshackathon.Electron1`
 
 ### schemeSlashCount
 
-Allowed values: `'1'` and `'2'`
+Allowed values: `1` or `2`; use integer, not string values.
 
 RFC 8252 sec. 7.1 also recommends that a single
 slash should be used in the redirect URL since there is no naming authority. But some IdP's don't support a single slash in a redirect URL.
 
 If you're using an intermediate page, set this value
-to `'1'` and use a single slash.
+to `1` and use a single slash.
 
-Example redirect URL with schemeSlashCount='2':
+Example redirect URL with `schemeSlashCount: 2` --
 
 `schemeName://implicitReturnPath`
 
 or (using example values from above)
 
-`com.example.Electron1://implicit-result`
+`com.example.electron1://implicit-result`
 
-Example redirect URL with schemeSlashCount='1':
+Example redirect URL with `schemeSlashCount: 1` --
 
 `schemeName:/implicitReturnPath`
 
 or (using example values from above)
 
-`com.example.Electron1:/implicit-result`
+`com.example.electron1:/implicit-result`
 
 ### idpUrl
 
@@ -186,8 +194,8 @@ https is preferred but is not required.
 
 ## Files updated and added
 
-- A .env file is now required (see below).
-- src/App.global.css -- add additional CSS rules for Toast messages and new
+- src/config.js -- required configuratio file (see above).
+- src/App.global.css -- added additional CSS rules for Toast messages and new
   home page content.
 - src/App.tsx -- Updated to a class component. Many new methods added to
   support Implicit grant. The `state` object includes the OAuth information:
