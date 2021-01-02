@@ -1,42 +1,61 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <title>Please close this tab</title>
+    <meta name="description" content="Please close this tab" />
 
-<head>
-  <meta charset="utf-8">
-  <title>Please close this tab</title>
-  <meta name="description" content="Please close this tab">
+    <style>
+      body {
+        position: relative;
+        color: darkblue;
+        height: 100vh;
+        background: lightsteelblue;
+        font-family: 'Noto Sans JP', sans-serif;
+        overflow-y: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .newline {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 20px 0;
+      }
+      .tm {
+        margin-top: 3em;
+      }
+      #edge {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1 class="newline">Thank you for logging in.</h1>
+      <h1 class="newline">Please close this tab.</h1>
+      <!-- Unfortunately Microsoft Edge sometimes wants user input but doesn't ask for it!! -->
+      <h2 id="edge" class="tm">
+        If the application is not opening: click within this tab, then type
+        Ctrl+Shift+R
+      </h2>
+    </div>
 
-  <style>
-    body {
-      position: relative;
-      color: darkblue;
-      height: 100vh;
-      background: lightsteelblue;
-      font-family: 'Noto Sans JP', sans-serif;
-      overflow-y: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .newline {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 20px 0;
-    }
-  </style>
-</head>
-<body>
-  <div>
-    <h1 class="newline">Thank you for logging in.</h1>
-    <h1 class="newline">Please close this tab.</h1>
-  </div>
+    <script>
+      const electronUrl = 'com.example.electron1:/implicit-result';
+      //console.log (`##### redirecting to ${electronUrl + window.hash}`)
+      window.location = electronUrl + window.location.hash;
 
-  <script>
-    let electronUrl = 'com.example.electron1:/implicit-result';
-    //console.log (`##### redirecting to ${electronUrl + window.hash}`)
-
-    window.location = electronUrl + window.location.hash;
-  </script>
-</body>
-
+      // For Edge and IE browsers: show the Edge info
+      const agent = window.navigator.userAgent.toLowerCase();
+      const edge =
+        agent.indexOf('edg/') > -1 ||
+        agent.indexOf('edge/') > -1 ||
+        agent.indexOf('trident/') > -1;
+      if (edge) {
+        document.getElementById('edge').style.display = 'block';
+      }
+    </script>
+  </body>
+</html>
