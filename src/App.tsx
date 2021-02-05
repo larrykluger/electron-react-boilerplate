@@ -9,6 +9,7 @@ import { ipcRenderer } from 'electron';
 import { ToastContainer, toast } from 'react-toastify';
 import icon from '../assets/icon.svg';
 import OAuthImplicit from './OAuthImplicit';
+import './App.global.css';
 
 // state attributes for authentication results and state
 type AppState = {
