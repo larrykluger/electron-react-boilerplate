@@ -145,6 +145,7 @@ function setAsDefaultProtocolClient(protocol: string | undefined) {
       protocolLauncherArg,
     ]);
   } else {
+    app.removeAsDefaultProtocolClient(protocol);
     app.setAsDefaultProtocolClient(protocol);
   }
 }
